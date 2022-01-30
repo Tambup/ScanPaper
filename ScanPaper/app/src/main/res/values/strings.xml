@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ScanPaper</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_camera">Photo</string>
+    <string name="take_photos">Take Photos</string>
+    <string name="http_example_port">http://example:port</string>
+</resources>
