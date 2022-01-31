@@ -3,7 +3,10 @@ package com.scan.scanpaper.ui.camera
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +15,7 @@ import android.webkit.URLUtil
 import android.widget.Button
 import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.scan.scanpaper.R
@@ -19,13 +23,17 @@ import com.scan.scanpaper.databinding.FragmentCameraBinding
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import java.io.DataOutputStream
+import java.io.File
 import java.io.OutputStream
 import java.net.HttpURLConnection
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class CameraFragment : Fragment() {
     private lateinit var cameraViewModel: CameraViewModel
     private var _binding: FragmentCameraBinding? = null
+    private var currentPhotoPath: String = ""
 
     // This property is only valid between onCreateView and
     // onDestroyView.
@@ -48,7 +56,7 @@ class CameraFragment : Fragment() {
 
         val launchSomeActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                val image: Bitmap = result.data?.extras?.get("data") as Bitmap
+                val image: Bitmap = BitmapFactory.decodeFile(currentPhotoPath)
                 val byteArray = ByteArrayOutputStream()
                 image.compress(Bitmap.CompressFormat.PNG, 100, byteArray)
                 val bytes: ByteArray = byteArray.toByteArray()
@@ -59,8 +67,32 @@ class CameraFragment : Fragment() {
 
         val button = view.findViewById<Button>(R.id.takePhoto)
         button.setOnClickListener {
-            val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            launchSomeActivity.launch(takePictureIntent)
+            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+                val photoFile: File? = createImageFile()
+
+                photoFile?.also {
+                    val photoURI: Uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "com.scan.scanpaper.fileprovider",
+                        it
+                    )
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                    launchSomeActivity.launch(takePictureIntent)
+                }
+
+            }
+
+        }
+    }
+
+    private fun createImageFile(): File {
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val aaa=Environment.DIRECTORY_PICTURES
+        val storageDir: File? = activity?.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "PNG_${timeStamp}_", ".png", storageDir
+        ).apply {
+            currentPhotoPath = this.absolutePath
         }
     }
 

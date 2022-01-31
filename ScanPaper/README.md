@@ -1,1 +1,1 @@
-# Client application for android.
+# Client application for android
